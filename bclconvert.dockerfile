@@ -1,22 +1,18 @@
-#centos from dockerhub
-FROM dokken/centos-stream-9:latest
+# download base image ubuntu 24.04
+FROM ubuntu:24.04
 
-#metadata
-LABEL base.image="centos-stream-9:latest"
-LABEL software="bclconvert"
-LABEL software.version="4.3.6"
-LABEL dockerfile.version="1"
-LABEL description="BCL file convert to FASTQ file"
-LABEL website="https://emea.support.illumina.com/sequencing/sequencing_software/bcl-convert/downloads.html"
+# get the package
+COPY bcl-convert.rpm /tmp/
 
-#add bclconvert from local file
-ADD /Users/thusor/Downloads/bcl-convert-4.3.6-2.el7.x86_64.rpm /tmp/bcl-convert.rpm
+# repress tzdata prompt
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+ && apt-get install -y alien \
+ && rm -rf /var/lib/apt/lists/* \
+ && alien -i /tmp/bcl-convert.rpm \
+ && rm /tmp/bcl-convert.rpm
 
-#update system and download necessary programs
-RUN yum install -y gdb && \
-    rpm -i /tmp/bcl-convert.rpm && \
-    rm /tmp/bcl-convert.rpm && \
-    yum clean all && \
-    rm -rf /var/cache/yum
+# make an executable the default
+ENTRYPOINT ["bcl-convert"]
 
-ENTRYPOINT ["/usr/bin/bcl-convert"]
+CMD ["--version"]
